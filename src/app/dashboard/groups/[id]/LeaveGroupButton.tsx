@@ -23,7 +23,7 @@ export function LeaveGroupButton({ groupId, currentUserId }: { groupId: string, 
 
       router.push('/dashboard')
       router.refresh()
-    } catch (err: any) {
+    } catch (err: unknown) {
       alert(err.message)
       setLoading(false)
     }

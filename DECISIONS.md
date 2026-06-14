@@ -1,137 +1,53 @@
-# DECISIONS.md — Engineering & Product Decision Log
+# DECISIONS: Architectural & Implementation Choices
 
-Every significant decision, the options considered, and why we chose what we chose.
+This document outlines the significant technical and product decisions made during the development of this Splitwise clone.
 
----
-
-## 1. Tech Stack Selection
-
-**Decision:** Next.js (App Router) + Supabase (PostgreSQL) + Prisma ORM
-
+## 1. Using Integer Cents over Floats for Financial Data
 **Options Considered:**
-- A: Express.js REST API + React frontend + PostgreSQL → More control, more boilerplate
-- B: Next.js + Supabase + Prisma → Unified codebase, managed DB, built-in real-time
-- C: Firebase → NoSQL, violates the "relational DBs only" constraint
+- Float (`DECIMAL` or `FLOAT` in SQL)
+- Integer representing cents (`Int` in Prisma)
 
-**Why B:** The assignment explicitly requires a relational database. Supabase gives us managed PostgreSQL, authentication, and real-time subscriptions. Prisma gives us type-safe schema management. Next.js collapses the frontend/backend boundary so we can move faster. This stack lets two developers ship a working product in 2 days.
+**Decision:** Integer (Cents).
+**Why:** Floating-point math in JavaScript can lead to precision loss (e.g., `0.1 + 0.2 = 0.30000000000000004`), which is catastrophic in a financial app. We store everything in `amountCents` (e.g., $10.00 is stored as 1000). All math and splitting is done safely on integers, with any remaining modulo drift strictly assigned to users deterministically (alphabetically) to ensure total splits exactly match the bill.
 
----
-
-## 2. Monetary Precision: Store as Integer Cents
-
-**Decision:** All monetary amounts stored as integers representing the smallest currency unit (paise for INR, cents for USD).
-
+## 2. Server Components vs. Client Components (Next.js App Router)
 **Options Considered:**
-- A: Store as NUMERIC/DECIMAL in PostgreSQL
-- B: Store as FLOAT → Rejected immediately (0.1 + 0.2 ≠ 0.3 in floating point)
-- C: Store as INTEGER (cents/paise) → Chosen
+- Build everything as Client Components (`'use client'`).
+- Build everything as Server Components, relying heavily on Server Actions.
+- Hybrid Approach (Server-first, Client leaves).
 
-**Why C:** JavaScript's native number type is a 64-bit float. Operations like `3200 / 3 = 1066.666...` cause rounding inconsistencies. By storing as integers and only converting to display values at the UI layer, we eliminate floating-point drift entirely. All financial arithmetic is integer arithmetic.
+**Decision:** Hybrid Approach.
+**Why:** We leaned heavily into React Server Components (RSC) to fetch database records securely and efficiently. We only used Client Components (`'use client'`) at the deepest possible level (e.g., `AddExpenseModal.tsx`, `ExpenseChat.tsx`) where user interaction, local state, or live form handling was required. This keeps our JavaScript bundle extremely small and our app blazing fast.
 
-**Rounding Rule:** When splitting equally, divide total and floor it. Remainder cents (e.g., 1 paise) go to the first person in alphabetical order. This is deterministic and auditable.
-
----
-
-## 3. Multi-Currency Handling
-
-**Decision:** Store both original currency/amount AND a converted INR equivalent. Let the user confirm the exchange rate at import time.
-
+## 3. Database Choice & ORM
 **Options Considered:**
-- A: Refuse to import USD expenses → Breaks Priya's explicit requirement
-- B: Assume 1 USD = 1 INR → This is exactly the bug Priya complained about
-- C: Auto-fetch live exchange rate from an API → Rate at time of trip differs from today's rate
-- D: Prompt user to enter the USD→INR rate at import time, store it per-expense → Chosen
+- MongoDB (NoSQL) with Mongoose.
+- PostgreSQL (SQL) with Prisma.
 
-**Why D:** The trip was in March 2026. The exchange rate then (≈₹83/USD) matters, not today's rate. We store the FX rate alongside each expense so any future audit can reconstruct exactly how the conversion was done. This is the honest, transparent approach.
+**Decision:** PostgreSQL with Prisma.
+**Why:** A financial splitting app is highly relational. A `Group` has many `Members`, an `Expense` has many `Splits`, and `Settlements` link two users together. A relational SQL database guarantees referential integrity. Prisma was chosen for its best-in-class TypeScript safety, allowing us to catch data-shape errors at compile time rather than runtime.
 
----
-
-## 4. Time-Based Group Membership
-
-**Decision:** `GroupMember` table has both `joined_at` and `left_at` columns. Expense splits respect membership at the time of the expense date.
-
+## 4. Debt Simplification Algorithm
 **Options Considered:**
-- A: No membership history — just current members
-- B: Soft-delete with `deleted_at`
-- C: Explicit `joined_at` and `left_at` columns → Chosen
+- Basic Ledger: Just sum up who owes who for every single transaction (results in $A \rightarrow B, B \rightarrow C, C \rightarrow A$).
+- Graph-based Simplification: Calculate net balances per user, split into "creditors" and "debtors", and greedily match them.
 
-**Why C:** Sam's complaint is explicit — "I moved in mid-April. Why would March electricity affect my balance?" Without temporal membership, we cannot answer this question correctly. The split engine checks: for any expense on date D, only include members where `joined_at <= D AND (left_at IS NULL OR left_at >= D)`.
+**Decision:** Graph-based Net Balance Simplification.
+**Why:** The standard Splitwise feature is "Simplify Debts". We implemented a greedy matching algorithm that calculates the net positive/negative balance for every user in the group. We then continuously pay off the largest debtor with the largest creditor. This mathematically guarantees the absolute minimum number of transactions required to settle the group.
 
----
-
-## 5. CSV Import Strategy: Detect, Surface, Don't Guess
-
-**Decision:** The importer runs in two phases. Phase 1: parse and detect ALL anomalies, surface them grouped by type. Phase 2: import only after user reviews and approves each resolution.
-
+## 5. Handling Multi-Currency in the Database
 **Options Considered:**
-- A: Auto-fix silently → "A silent guess is a failing answer" (from assignment brief)
-- B: Crash on first error → "A crashed import is a failing answer" (from assignment brief)
-- C: Two-phase: parse → review → import → Chosen
+- Store raw amounts, require the UI to convert on the fly.
+- Store everything in a single base currency only.
+- Store original amount + original currency + FX Rate + normalized base currency.
 
-**Why C:** The assignment brief explicitly says both A and B are failing answers. Our importer must detect AND surface. We chose a review UI where anomalies are presented in categories (duplicates, format errors, missing data, etc.) with a proposed resolution and an "Accept / Override" toggle per row.
+**Decision:** Store original amount + FX Rate + normalized base currency (`inrEquivalentCents`).
+**Why:** Users want to see the original receipt value (e.g., "Dinner in Paris: 50 EUR"). However, the algorithm needs a single normalized currency to calculate net debts. By locking the FX rate at the time the expense is created, we preserve the historical context while allowing the simplification algorithm to run perfectly on a unified base currency (INR).
 
----
-
-## 6. Debt Simplification Algorithm
-
-**Decision:** Greedy net-balance algorithm.
-
+## 6. The "Any" Type Eradication
 **Options Considered:**
-- A: Store raw debts (A owes B, B owes C) and show them all → Violates Aisha's requirement: "one number per person"
-- B: Exact minimum-transaction algorithm (NP-Hard) → Computationally intractable for large groups
-- C: Greedy: calculate net balance per person, match largest creditor to largest debtor → Chosen
+- Use `any` in `catch` blocks and CSV parsers to save time.
+- Enforce strict typing via `eslint` (`@typescript-eslint/no-explicit-any`).
 
-**Why C:** The greedy approach is the industry standard (used by Splitwise). It does not always produce the absolute minimum number of transactions, but it always produces the minimum total money flow, and runs in O(N log N). Rohan's requirement ("I want to see which expenses make that up") is met separately by a drill-down view, not by the simplified debt summary.
-
----
-
-## 7. Percentage Splits That Don't Sum to 100%
-
-**Decision:** Do not silently normalise. Block the row and require user intervention.
-
-**Options Considered:**
-- A: Normalise proportionally → Changes the actual amounts paid. Financially incorrect without consent.
-- B: Block and require user correction → Chosen
-- C: Skip silently → Loses data
-
-**Why B:** Normalising 110% to 100% means every person's share gets recalculated without their knowledge. That is a silent financial modification. We block the row, show the user exactly what the sum is, and require them to either correct the percentages or explicitly approve normalisation.
-
----
-
-## 8. Duplicate Expense Detection
-
-**Decision:** Fuzzy match on (date, payer, amount, members). Not exact string match on description.
-
-**Options Considered:**
-- A: Exact match on description → Would miss "Dinner at Marina Bites" vs "dinner - marina bites"
-- B: Fuzzy description match only → Too many false positives
-- C: Combination: same date + same payer + same amount + overlapping members + fuzzy description → Chosen
-
-**Why C:** The duplicate in the CSV has different capitalisation and punctuation but identical financial data. The combination check reduces false positives (many legitimate expenses have the same amount) while catching true duplicates.
-
----
-
-## 9. Non-Members in Split (Kabir)
-
-**Decision:** Default to redistributing the non-member's share equally among known members. Flag in import report.
-
-**Options Considered:**
-- A: Create a new user for Kabir → He has no account and no ongoing relationship with the group
-- B: Skip the expense entirely → Kabir participated; ignoring him loses money
-- C: Write off Kabir's share (treat as absorbed by Dev) → Arbitrary
-- D: Redistribute Kabir's share among known members → Chosen
-
-**Why D:** Kabir joined for one day. Creating an account for him adds permanent system complexity for a one-time guest. Redistributing his share means the four primary members absorb his cost, which is the most pragmatic outcome. This is fully documented in the import report.
-
----
-
-## 10. Thalassa Duplicate (Two People Logged Different Amounts)
-
-**Decision:** Default to keeping the higher-amount row (Row 25, ₹2450 by Rohan). Require user to confirm.
-
-**Options Considered:**
-- A: Average the two amounts → Financially meaningless
-- B: Take the first row → The note on Row 25 says Row 25 is probably correct
-- C: Take the higher amount and flag for user confirmation → Chosen
-
-**Why C:** Row 25's note explicitly says "Aisha also logged this I think hers is wrong." This is a clear signal that the second entry (₹2450) is intended to be the correct one. We take the higher-confidence entry but surface it for user confirmation — we never make financial decisions without consent.
+**Decision:** Strict TypeScript enforcement (0 `any` types).
+**Why:** Relying on `any` leads to runtime crashes that are difficult to debug, especially when parsing unpredictable CSV files. We enforced strict interfaces (`Record<string, string>`) for CSV rows and strict error boundaries (`err instanceof Error`) in catch blocks. This significantly raised the stability of the application.

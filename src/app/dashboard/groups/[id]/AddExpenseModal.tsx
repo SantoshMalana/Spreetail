@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 
 interface Member {
@@ -52,16 +52,15 @@ export function AddExpenseModal({ isOpen, onClose, groupId, members, currentUser
   }, [expenseDate, members])
 
   // Auto-remove users who weren't active on that date from the included set
-  useEffect(() => {
-    const activeIds = new Set(activeMembersOnDate.map(m => m.userId))
-    setIncludedUserIds(prev => {
-      const next = new Set(prev)
-      for (const id of next) {
-        if (!activeIds.has(id)) next.delete(id)
-      }
-      return next
-    })
-  }, [activeMembersOnDate])
+  // Derived during render instead of useEffect to prevent cascading renders
+  const activeIds = useMemo(() => new Set(activeMembersOnDate.map(m => m.userId)), [activeMembersOnDate])
+  const actualIncludedUserIds = useMemo(() => {
+    const next = new Set(includedUserIds)
+    for (const id of next) {
+      if (!activeIds.has(id)) next.delete(id)
+    }
+    return next
+  }, [includedUserIds, activeIds])
 
   const parsedAmount = parseFloat(amount) || 0
   const parsedFxRate = currency === 'USD' ? parseFloat(fxRate) || 1 : 1
@@ -69,7 +68,7 @@ export function AddExpenseModal({ isOpen, onClose, groupId, members, currentUser
 
   // Calculate the live split preview
   const calculatedSplits = useMemo(() => {
-    const included = Array.from(includedUserIds)
+    const included = Array.from(actualIncludedUserIds)
     if (included.length === 0 || inrEquivalent === 0) return {}
 
     const result: Record<string, number> = {}
@@ -119,7 +118,7 @@ export function AddExpenseModal({ isOpen, onClose, groupId, members, currentUser
       }
     }
     return result
-  }, [inrEquivalent, includedUserIds, splitType, splitValues])
+  }, [inrEquivalent, actualIncludedUserIds, splitType, splitValues])
 
   // Early return AFTER all hooks to satisfy Rules of Hooks
   if (!isOpen) return null
@@ -129,7 +128,7 @@ export function AddExpenseModal({ isOpen, onClose, groupId, members, currentUser
     setLoading(true)
     setError('')
 
-    const included = Array.from(includedUserIds)
+    const included = Array.from(actualIncludedUserIds)
     if (included.length === 0) {
       setError('You must include at least one person in the split.')
       setLoading(false)
@@ -164,8 +163,8 @@ export function AddExpenseModal({ isOpen, onClose, groupId, members, currentUser
 
       onClose()
       router.refresh()
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setLoading(false)
     }
@@ -313,7 +312,7 @@ export function AddExpenseModal({ isOpen, onClose, groupId, members, currentUser
                     <label className="flex items-center gap-3 cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={includedUserIds.has(m.userId)}
+                        checked={actualIncludedUserIds.has(m.userId)}
                         onChange={() => toggleUser(m.userId)}
                         className="w-5 h-5 rounded border-gray-600 text-emerald-500 focus:ring-emerald-500 bg-gray-800"
                       />

@@ -25,8 +25,8 @@ export function DeleteGroupButton({ groupId }: { groupId: string }) {
       toast('Group deleted successfully')
       router.push('/dashboard')
       router.refresh()
-    } catch (err: any) {
-      toast(err.message, 'error')
+    } catch (err: unknown) {
+      toast(err instanceof Error ? err.message : 'An error occurred', 'error')
       setLoading(false)
     }
   }

@@ -1,0 +1,42 @@
+# IMPORT REPORT
+Date: 15-June-2026
+
+## File Ingested: complex_expenses.csv
+Status: Success
+Total Rows Processed: 8
+Expenses Created: 6
+Settlements Created: 1
+Rows Skipped: 1
+
+## Anomaly Detection Log
+
+1. ROW 2: "Skipped expense"
+   - Anomaly Detected: Blank amount.
+   - Action Taken: Skipped row entirely.
+
+2. ROW 3: "Rahul paid Aisha back"
+   - Anomaly Detected: Settlement disguised as expense (Amount: 500, Split with: Aisha).
+   - Action Taken: Aborted expense creation. Native Settlement created (Payer: Rahul, Payee: Aisha).
+
+3. ROW 4: "Groceries"
+   - Anomaly Detected: Missing Currency.
+   - Action Taken: Defaulted currency to base currency (INR). Amount processed as 350 INR.
+
+4. ROW 5: "Pre-April expense"
+   - Anomaly Detected: User (Sam) listed in `split_with` was not an active group member in February.
+   - Action Taken: Sam was automatically dropped from the split calculations. Expense divided among Rahul, Aisha, and Meera.
+
+5. ROW 6: "Post-April expense"
+   - Anomaly Detected: User (Meera) listed in `split_with` was not an active group member in April.
+   - Action Taken: Meera was automatically dropped from the split calculations. Expense divided among Rahul, Aisha, and Sam.
+
+6. ROW 7: "Party Supplies"
+   - Anomaly Detected: `split_type` listed as EQUAL, but explicit share values were provided in `split_details` (Rahul 2; Aisha 1; Sam 1).
+   - Action Taken: Overrode `split_type` to SHARE to respect the manual input. Expense split accordingly.
+
+7. ROW 8: "Hotel Booking"
+   - Anomaly Detected: `split_details` percentages mathematically summed to 110% (Rahul 40%; Aisha 40%; Sam 30%).
+   - Action Taken: Normalized percentages to 100% (Rahul 36.3%; Aisha 36.3%; Sam 27.2%) to prevent accounting drift.
+
+---
+End of Report

@@ -101,7 +101,7 @@ export function ExpenseChat({ expenseId, groupId, currentUserId }: { expenseId: 
       if (data.comment) {
         setComments(prev => prev.map(c => c.id === tempId ? data.comment : c))
       }
-    } catch (err) {
+    } catch {
       console.error('Failed to send message')
       setComments(prev => prev.filter(c => c.id !== tempId))
     }

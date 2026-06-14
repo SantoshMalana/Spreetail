@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     if (!csvData) return NextResponse.json({ error: 'Missing CSV data' }, { status: 400 })
 
     const parsed = Papa.parse(csvData, { header: true, skipEmptyLines: true })
-    const rows = parsed.data as any[]
+    const rows = parsed.data as Record<string, string>[]
 
     // --- ANOMALY RESOLUTION ENGINE ---
 
@@ -237,7 +237,7 @@ export async function POST(request: Request) {
 
         importedExpensesCount++
 
-      } catch (err: any) {
+      } catch (err: unknown) {
         errors.push(`Row ${i + 2}: ${err.message}`)
       }
     }

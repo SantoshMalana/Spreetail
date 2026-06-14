@@ -42,8 +42,8 @@ export function EditGroupModal({ isOpen, onClose, groupId, currentName }: Props)
       toast('Group name updated successfully')
       onClose()
       router.refresh()
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setLoading(false)
     }

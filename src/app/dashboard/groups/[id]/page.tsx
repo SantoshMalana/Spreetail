@@ -35,7 +35,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
   // Security check: Only members can view
   const isMember = group.members.some(m => m.userId === user.userId)
   if (!isMember) {
-    return <div className="text-white">You don't have permission to view this group.</div>
+    return <div className="text-white">You don&apos;t have permission to view this group.</div>
   }
 
   const simplifiedDebts = calculateSimplifiedDebts(group.expenses, group.settlements)

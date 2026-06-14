@@ -1,0 +1,28 @@
+date,description,amount,currency,paid_by,split_with,split_type,split_details
+# Normal expenses
+15/02/2026,Dinner at Mario's,"1,200",INR,Rahul,Rahul; Aisha; Meera,EQUAL,
+Mar 14,Flight Tickets,899.995,USD,Aisha,Rahul; Aisha; Meera; Sam,PERCENTAGE,Rahul 30%; Aisha 30%; Meera 20%; Sam 20%
+
+# Anomalies:
+# 1. Blank amount - should be skipped
+20/03/2026,Skipped expense,,INR,Meera,Rahul; Meera,EQUAL,
+
+# 2. Settlement disguised as an expense
+02/04/2026,Rahul paid Aisha back,500,INR,Rahul,Aisha,,
+
+# 3. Missing currency - should default to INR
+05/04/2026,Groceries,350,,Meera,Rahul; Aisha; Meera; Sam,EQUAL,
+
+# 4. User joining/leaving logic:
+# Meera drops from April onwards, Sam drops before April.
+10/02/2026,Pre-April expense,400,INR,Rahul,Rahul; Aisha; Meera; Sam,EQUAL,
+15/04/2026,Post-April expense,400,INR,Rahul,Rahul; Aisha; Meera; Sam,EQUAL,
+
+# 5. Split type says EQUAL but has share details (should convert to SHARE)
+20/04/2026,Party Supplies,600,INR,Aisha,Rahul; Aisha; Sam,EQUAL,Rahul 2; Aisha 1; Sam 1
+
+# 6. Percentages that sum to 110% (should normalize)
+25/04/2026,Hotel Booking,2000,INR,Sam,Rahul; Aisha; Sam,PERCENTAGE,Rahul 40%; Aisha 40%; Sam 30%
+
+# 7. Unequal/Exact splits
+28/04/2026,Concert Tickets,1500,INR,Rahul,Rahul; Aisha; Sam,UNEQUAL,Rahul 600; Aisha 500; Sam 400

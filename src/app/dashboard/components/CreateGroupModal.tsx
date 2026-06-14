@@ -34,8 +34,8 @@ export function CreateGroupModal({ isOpen, onClose }: Props) {
       onClose()
       setName('')
       router.refresh() // Refresh dashboard to show new group
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setLoading(false)
     }

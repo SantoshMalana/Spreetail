@@ -23,7 +23,7 @@ export function DeleteExpenseButton({ groupId, expenseId }: { groupId: string, e
 
       router.push(`/dashboard/groups/${groupId}`)
       router.refresh()
-    } catch (err: any) {
+    } catch (err: unknown) {
       alert(err.message)
       setLoading(false)
     }

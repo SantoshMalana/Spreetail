@@ -5,11 +5,11 @@ import { useRouter } from 'next/navigation'
 
 export default function ImportPage() {
   const router = useRouter()
-  const [groups, setGroups] = useState<any[]>([])
+  const [groups, setGroups] = useState<{ id: string; name: string }[]>([])
   const [selectedGroupId, setSelectedGroupId] = useState('')
   const [fileContent, setFileContent] = useState<string>('')
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<Record<string, unknown> | null>(null)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -60,8 +60,8 @@ export default function ImportPage() {
           router.push(`/dashboard/groups/${selectedGroupId}`)
         }, 3000)
       }
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setLoading(false)
     }

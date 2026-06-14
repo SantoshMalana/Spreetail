@@ -41,8 +41,8 @@ export function EditProfileModal({ isOpen, onClose, currentName }: Props) {
       toast('Profile name updated successfully')
       onClose()
       router.refresh()
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setLoading(false)
     }

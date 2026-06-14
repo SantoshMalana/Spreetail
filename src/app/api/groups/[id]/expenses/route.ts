@@ -30,7 +30,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     // Verify all splits sum up to the total INR equivalent
     const inrEquivalentCents = Math.round(amountCents * (fxRate || 1.0))
-    const totalSplits = splits.reduce((sum: number, split: any) => sum + split.amountOwedCents, 0)
+    type SplitInput = { userId: string; amountOwedCents: number; splitType: string; splitValue: number | null }
+    const totalSplits = splits.reduce((sum: number, split: SplitInput) => sum + split.amountOwedCents, 0)
     
     // Allow minor 1-cent rounding drift per person due to frontend math
     if (Math.abs(totalSplits - inrEquivalentCents) > splits.length) {
@@ -52,7 +53,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         category: category || '🧾',
         expenseDate: new Date(expenseDate),
         splits: {
-          create: splits.map((s: any) => ({
+          create: splits.map((s: SplitInput) => ({
             userId: s.userId,
             amountOwedCents: s.amountOwedCents,
             splitType: s.splitType,

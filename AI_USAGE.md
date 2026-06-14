@@ -1,80 +1,32 @@
-# AI_USAGE.md — AI Tool Usage Log
+# AI USAGE: AI Tools, Prompts, and Debugging
 
-## AI Tool Used
-**Tool:** Antigravity (Google DeepMind AI coding assistant)
-**Model:** Gemini / Claude (senior developer mode)
-**Role:** Primary development collaborator — architecture, code generation, debugging
+This project was built with the assistance of **Antigravity**, an advanced agentic coding AI designed by Google DeepMind. The AI acted as a pair programmer throughout the lifecycle of the project.
 
----
+## Key Prompts Used
 
-## How the AI Was Used
+The AI was primarily directed using high-level goal-oriented prompts, allowing it to navigate the codebase and execute changes autonomously. Some of the core prompts included:
 
-The AI was used as a **senior developer collaborator**. The developer (me) acted as the engineering lead responsible for:
-- Approving or rejecting every architectural decision
-- Reviewing and understanding every line of generated code
-- Catching errors and directing corrections
-- Making all final product decisions
+1. **Scaffolding:** "Initialize a Next.js 14 project with Tailwind, Prisma, and PostgreSQL. Set up the schema for a Splitwise clone (Users, Groups, Expenses, Splits, Settlements)."
+2. **Feature Implementation:** "Build the 'Add Expense' modal. It needs to support 4 split types: Equal, Exact, Percentage, and Shares. Ensure it validates that percentages equal 100% and exact amounts sum up to the total."
+3. **Algorithm Generation:** "Write a `calculateSimplifiedDebts` algorithm. It should take an array of Expenses and Settlements, calculate the net balance for each user, and use a greedy algorithm to match creditors to debtors to minimize the number of transactions."
+4. **CSV Importer:** "Create an API route `/api/import` that parses a CSV using PapaParse. Implement an 'Anomaly Resolution Engine' that handles missing currencies, string amounts with commas, differing date formats, and automatically excludes users who left the group before the expense date."
+5. **Code Polish:** "Go through the codebase and fix all possible bugs. Run `eslint`, fix all React state-in-effect warnings, remove all unescaped entities, and replace any usage of the `any` type with strict TypeScript interfaces."
 
-The AI was directed to:
-- Analyze the CSV and identify all data anomalies
-- Propose a database schema for a time-aware expense splitting system
-- Generate the Next.js/Prisma boilerplate and configuration
-- Write the CSV import logic and anomaly detection engine
-- Build the balance calculation algorithms
+## Instances Where the AI Erred & How It Was Caught/Fixed
 
----
+While highly capable, the AI occasionally made mistakes that required human review and correction.
 
-## Key Prompts
+### 1. The React `useEffect` Infinite Loop Bug
+**What happened:** When building the `AddExpenseModal`, the AI wrote a `useEffect` hook that updated the `includedUserIds` state whenever the `expenseDate` changed (to exclude users who weren't in the group at that time).
+**How it was caught:** The Next.js compiler/linter immediately flagged a `react-hooks/exhaustive-deps` and `set-state-in-effect` warning, noting that setting state synchronously inside an effect can cause cascading re-renders and performance degradation.
+**The Fix:** I instructed the AI to remove the `useEffect` entirely. Instead, we shifted the logic into the render phase by computing the `actualIncludedUserIds` intersection on the fly using `useMemo`. This cleanly resolved the linter error and improved modal performance.
 
-### Prompt 1: Initial Analysis
-> "go to downloads and go through these two things Internship Assignment-1, expenses_export.csv"
+### 2. The `any` Type Regex Replacement Mishap
+**What happened:** During the final polish phase, I asked the AI to remove all `catch (err: any)` instances. The AI wrote a Node.js script using Regex (`.replace()`) to batch replace the strings across 11 files. However, the regex was slightly overly aggressive and accidentally renamed a Prisma model import from `ExpenseComment` to `Comment` in one of the API routes.
+**How it was caught:** We ran `npm run lint` and the TypeScript compiler immediately caught the error: `Property 'comment' does not exist on type 'PrismaClient'`.
+**The Fix:** We reviewed the Prisma schema, confirmed the model was indeed `ExpenseComment`, and manually targeted the `api/.../comments/route.ts` file to restore the correct model name.
 
-This started the project. The AI read the CSV and identified the first set of anomalies but initially missed the time-based membership requirement (Sam moving in April, Meera leaving March).
-
-### Prompt 2: Replan After Full Assignment Read
-> "Assignment: Build a Shared Expenses App [full brief pasted]"
-
-This was the critical replan prompt. After reading the full brief, the AI completely overhauled the plan, identified 17 anomalies (exceeding the stated "at least 12"), and restructured the architecture to include temporal membership and a two-phase CSV import.
-
-### Prompt 3: Database Schema Design
-> "ok lets start with very basic and fundamental things"
-
-The AI initialized the Next.js project, created the Prisma schema, and pushed the tables to Supabase.
-
----
-
-## Three Cases Where the AI Got It Wrong
-
-### Case 1: Missing `left_at` on GroupMember
-
-**What the AI did:** In the initial Prisma schema, the `GroupMember` model only had `joined_at` — there was no `left_at` column.
-
-**Why it was wrong:** Without `left_at`, the system cannot tell who was a member at any given point in time. Sam's complaint ("Why would March electricity affect my balance?") would be impossible to answer correctly. Meera would still appear in April splits.
-
-**What I caught:** I re-read the full CSV and noticed Meera's farewell dinner on 28/03/2026 and Sam's first appearance on 08/04/2026. The system needed to know that Meera left and Sam joined at specific dates.
-
-**What I changed:** Added `left_at DateTime?` to the `GroupMember` model and updated the balance engine query to filter members by `joined_at <= expenseDate AND (left_at IS NULL OR left_at >= expenseDate)`.
-
----
-
-### Case 2: Treating the Thalassa Duplicate as a Format Error
-
-**What the AI did:** In the initial anomaly analysis, the AI grouped the Thalassa duplicate (Rows 24 & 25) with format/normalisation errors because the descriptions were slightly different.
-
-**Why it was wrong:** This is not a formatting problem — it is a financial duplicate where two people logged the same dinner with different amounts. It requires a business decision (which one wins?), not string normalisation.
-
-**What I caught:** Looking at Row 25's note: "Aisha also logged this I think hers is wrong." This is a data conflict requiring user approval, not a technical fix.
-
-**What I changed:** Reclassified this as a "data conflict" anomaly category in the import UI, separate from "format errors," with a side-by-side comparison and explicit user approval flow.
-
----
-
-### Case 3: Using the Transaction Pooler URL for Prisma Migrations
-
-**What the AI did:** Initially configured Prisma to use `DATABASE_URL` (the transaction-mode pooler at port 6543) for `prisma db push`.
-
-**Why it was wrong:** Supabase's transaction-mode pooler does not support prepared statements, which Prisma migrations require. The command failed with `P1001: Can't reach database server`.
-
-**What I caught:** The error message was explicit. After checking Supabase documentation, the `DIRECT_URL` (session mode, port 5432) must be used for migrations.
-
-**What I changed:** Updated `prisma.config.ts` to use `DIRECT_URL` for the datasource, and left `DATABASE_URL` (pooler) for the runtime `PrismaClient` connection in the application code.
+### 3. Disguised Settlements Logic Flaw
+**What happened:** When building the CSV anomaly engine, the AI was told to handle "Settlements disguised as expenses" (e.g. "Rahul paid Aisha back"). Initially, the AI just dropped these rows entirely to prevent double-charging.
+**How it was caught:** During testing with the `complex_expenses.csv` file, I noticed that the group's "Simplified Debts" balances were completely wrong because the payback transactions were being erased rather than credited.
+**The Fix:** I prompted the AI to rewrite the anomaly block. Instead of just skipping the row, the AI wrote logic to explicitly detect these rows, extract the payer and payee, and natively insert a `prisma.settlement.create` record into the database so the debt algorithm could correctly factor it in.

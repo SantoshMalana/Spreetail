@@ -1,80 +1,49 @@
-# Spreetail 💸
+# Splitwise Clone (Spreetail Assignment)
 
-A premium, full-stack shared expenses application built with Next.js 15, Supabase, Prisma, and TailwindCSS.
+A fully functional, responsive, and robust Splitwise clone built with Next.js 14, Tailwind CSS, Prisma, and PostgreSQL.
 
-![Spreetail Dashboard](./public/demo.png)
+## Setup Instructions
 
-## Features 🚀
-
-- **Smart Debt Simplification Engine**: An $O(N \log N)$ greedy algorithm that calculates net positions and minimizes the total number of transactions needed to settle up.
-- **Robust CSV Anomaly Engine**: Easily import dirty, real-world data. Our engine handles messy date formats, normalizes percentage logic (e.g., handles percentages that sum >100%), resolves temporal membership anomalies (charging users for periods before they joined or after they left), and maps hidden settlements correctly.
-- **Complex Split Logic**: Split bills EQUALLY, by EXACT amounts, by PERCENTAGE, or by relative SHARES.
-- **Multi-currency Support**: Native support for logging expenses in foreign currencies (e.g. USD) and resolving them to a base currency (INR) for fair settlement.
-- **Supabase Realtime Chat**: A live, web-socket powered chat interface on each expense detail view, allowing flatmates to argue over the Wifi bill in real-time.
-- **Premium Aesthetics**: Built with a sleek dark mode, smooth gradient typography, glassmorphism elements, and micro-animations for a 10x UX feel.
-
-## Tech Stack 🛠️
-
-- **Framework**: Next.js 15 (App Router)
-- **Styling**: Tailwind CSS
-- **Database**: PostgreSQL (via Supabase)
-- **ORM**: Prisma (with `@prisma/adapter-pg` for Edge-compatible connection pooling)
-- **Auth**: Custom JWT-based Authentication with Next.js Middleware
-- **Realtime**: `@supabase/supabase-js`
-
-## Local Development 💻
-
-1. **Clone the repository**
+1. **Clone the repository:**
    ```bash
-   git clone https://github.com/SantoshMalana/Spreetail.git
-   cd Spreetail
+   git clone <your-github-repo-url>
+   cd splitwise-clone
    ```
 
-2. **Install Dependencies**
+2. **Install dependencies:**
    ```bash
    npm install
    ```
 
-3. **Environment Variables**
-   Create a `.env` file in the root directory:
+3. **Environment Setup:**
+   Create a `.env` file in the root directory and add your database connection string and NextAuth secret.
    ```env
-   # Used by Prisma for schema migrations (Direct DB connection)
-   DIRECT_URL="postgresql://postgres.[YOUR-SUPABASE-REF]:[PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres"
-
-   # Used by the App for standard queries (Connection Pooler)
-   DATABASE_URL="postgresql://postgres.[YOUR-SUPABASE-REF]:[PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1"
-
-   # Supabase client config for Realtime Chat
-   NEXT_PUBLIC_SUPABASE_URL="https://[YOUR-SUPABASE-REF].supabase.co"
-   NEXT_PUBLIC_SUPABASE_ANON_KEY="your-anon-key"
-
-   # Custom Auth Key
-   JWT_SECRET="your-super-secret-key"
+   DATABASE_URL="postgresql://<user>:<password>@<host>:5432/<dbname>"
+   # Optional: For JWT Auth
+   JWT_SECRET="your_secure_random_string_here"
    ```
 
-4. **Initialize the Database**
+4. **Database Setup:**
+   Run the Prisma migrations to set up the database schema.
    ```bash
+   npx prisma generate
    npx prisma db push
-   
-   # Enable Supabase Realtime for the chat feature
-   node enable-realtime.js
    ```
 
-5. **Run the Development Server**
+5. **Run the Application Locally:**
    ```bash
    npm run dev
    ```
+   The application will be available at `http://localhost:3000`.
 
-## Vercel Deployment 🚀
+## Features
+- **User Authentication:** Secure JWT-based login and registration.
+- **Group Management:** Create groups, invite members, and delete empty groups.
+- **Expense Tracking:** Add expenses with detailed categorization (emojis).
+- **Smart Debt Simplification:** Algorithm to minimize the total number of transactions needed to settle up.
+- **Complex Splits:** Support for splitting equally, by exact amounts, percentages, or shares.
+- **CSV Import & Export:** Bulk import expenses from a CSV file with an advanced anomaly detection engine. Export group expenses to a CSV file.
+- **Real-time Chat:** Comment on individual expenses to discuss discrepancies.
 
-This project is configured to deploy seamlessly to Vercel.
-
-1. Push your code to GitHub.
-2. In Vercel, "Import Project" and select the repository.
-3. Add the **Environment Variables** listed above into your Vercel project settings.
-4. The Build Command is already configured in `package.json` to run `prisma generate && next build`.
-5. Click **Deploy**.
-
-## Testing the CSV Importer
-
-A dirty data file `expenses_export.csv` is provided in the project root. Navigate to `/dashboard/import` in the app, select a group, and upload this file to see the anomaly resolution engine in action!
+## AI Used
+This project was developed with the assistance of an advanced AI Coding Assistant (Antigravity/Gemini) for scaffolding components, setting up the Prisma schema, building the debt simplification algorithm, and generating the complex anomaly resolution logic for CSV imports. See `AI_USAGE.md` for complete details.
