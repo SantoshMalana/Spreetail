@@ -105,10 +105,9 @@ model ExpenseComment {
 
 model ImportSession {
   id            String   @id @default(uuid())
-  fileName      String
-  importedAt    DateTime @default(now())
-  totalRows     Int
-  importedRows  Int
-  skippedRows   Int
-  anomalyReport Json     // Full structured anomaly report stored as JSONB
+  groupId       String
+  importedBy    String
+  status        String   // COMPLETED | FAILED
+  logs          String   // JSON string with import stats and errors
+  createdAt     DateTime @default(now())
 }
