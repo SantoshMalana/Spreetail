@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ExpenseChat } from './ExpenseChat'
+import { DeleteExpenseButton } from './DeleteExpenseButton'
 
 export default async function ExpenseDetailsPage({ params }: { params: Promise<{ id: string, expenseId: string }> }) {
   const user = await getSessionUser()
@@ -37,12 +38,15 @@ export default async function ExpenseDetailsPage({ params }: { params: Promise<{
   return (
     <div className="animate-fade-in max-w-4xl mx-auto space-y-6">
       {/* Breadcrumb Navigation */}
-      <div className="flex items-center gap-2 text-sm text-gray-400">
-        <Link href={`/dashboard/groups/${groupId}`} className="hover:text-white transition-colors">
-          {expense.group.name}
-        </Link>
-        <span>›</span>
-        <span className="text-gray-300">Expense Details</span>
+      <div className="flex items-center justify-between text-sm text-gray-400">
+        <div className="flex items-center gap-2">
+          <Link href={`/dashboard/groups/${groupId}`} className="hover:text-white transition-colors">
+            {expense.group.name}
+          </Link>
+          <span>›</span>
+          <span className="text-gray-300">Expense Details</span>
+        </div>
+        <DeleteExpenseButton groupId={groupId} expenseId={expenseId} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

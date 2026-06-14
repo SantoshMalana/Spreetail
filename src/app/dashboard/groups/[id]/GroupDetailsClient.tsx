@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { InviteMemberModal } from './InviteMemberModal'
 import { AddExpenseModal } from './AddExpenseModal'
 import { SettleUpModal } from './SettleUpModal'
+import { EditGroupModal } from './EditGroupModal'
+import { LeaveGroupButton } from './LeaveGroupButton'
 import Link from 'next/link'
 
 interface GroupMember {
@@ -55,6 +57,7 @@ export function GroupDetailsClient({
   const [isInviteOpen, setIsInviteOpen] = useState(false)
   const [isExpenseOpen, setIsExpenseOpen] = useState(false)
   const [isSettleOpen, setIsSettleOpen] = useState(false)
+  const [isEditNameOpen, setIsEditNameOpen] = useState(false)
 
   const activeMembers = group.members.filter(m => !m.leftAt)
   const pastMembers = group.members.filter(m => m.leftAt)
@@ -64,7 +67,18 @@ export function GroupDetailsClient({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-1">{group.name}</h1>
+          <div className="flex items-center gap-3 mb-1">
+            <h1 className="text-3xl font-bold text-white">{group.name}</h1>
+            <button 
+              onClick={() => setIsEditNameOpen(true)}
+              className="p-1.5 text-gray-500 hover:text-emerald-400 hover:bg-emerald-400/10 rounded-lg transition-colors"
+              title="Edit Group Name"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            </button>
+          </div>
           <p className="text-gray-400">Manage expenses and members</p>
         </div>
         <button 
@@ -82,8 +96,12 @@ export function GroupDetailsClient({
             <h2 className="text-lg font-semibold text-white mb-6">Recent Expenses</h2>
             
             {group.expenses.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <p>No expenses logged yet.</p>
+              <div className="flex flex-col items-center justify-center py-16 text-center bg-gray-800/20 rounded-xl border border-dashed border-gray-700/50">
+                <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mb-4">
+                  <span className="text-2xl">💸</span>
+                </div>
+                <h3 className="text-lg font-medium text-gray-300 mb-1">No expenses yet</h3>
+                <p className="text-sm text-gray-500 max-w-[250px]">Add your first expense to start tracking shared costs with the group.</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -220,6 +238,8 @@ export function GroupDetailsClient({
                 </div>
               </div>
             )}
+            
+            <LeaveGroupButton groupId={group.id} currentUserId={currentUserId} />
           </div>
         </div>
       </div>
@@ -239,6 +259,12 @@ export function GroupDetailsClient({
         currentUserId={currentUserId}
         debts={simplifiedDebts}
         members={group.members}
+      />
+      <EditGroupModal
+        isOpen={isEditNameOpen}
+        onClose={() => setIsEditNameOpen(false)}
+        groupId={group.id}
+        currentName={group.name}
       />
     </div>
   )
