@@ -238,7 +238,7 @@ export async function POST(request: Request) {
         importedExpensesCount++
 
       } catch (err: unknown) {
-        errors.push(`Row ${i + 2}: ${err.message}`)
+        errors.push(`Row ${i + 2}: ${err instanceof Error ? err.message : 'Unknown error'}`)
       }
     }
 
