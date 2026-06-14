@@ -43,11 +43,10 @@ export function AddExpenseModal({ isOpen, onClose, groupId, members, currentUser
 
   // Filter members who were active on the selected expenseDate
   const activeMembersOnDate = useMemo(() => {
-    const d = new Date(expenseDate).getTime()
     return members.filter(m => {
-      const joined = new Date(m.joinedAt).getTime()
-      const left = m.leftAt ? new Date(m.leftAt).getTime() : Infinity
-      return joined <= d && left >= d
+      const joinedDateStr = m.joinedAt.split('T')[0]
+      const leftDateStr = m.leftAt ? m.leftAt.split('T')[0] : '9999-12-31'
+      return joinedDateStr <= expenseDate && leftDateStr >= expenseDate
     })
   }, [expenseDate, members])
 
