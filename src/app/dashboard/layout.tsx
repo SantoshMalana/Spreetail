@@ -2,6 +2,7 @@ import { getSessionUser } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { LogoutButton } from './LogoutButton'
+import { MobileNav } from './MobileNav'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser()
@@ -30,6 +31,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </div>
 
           <div className="flex items-center gap-4">
+            <MobileNav />
             <div className="hidden sm:flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-sm font-medium text-gray-300">
                 {user.name.charAt(0).toUpperCase()}
