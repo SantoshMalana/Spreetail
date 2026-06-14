@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { InviteMemberModal } from './InviteMemberModal'
 import { AddExpenseModal } from './AddExpenseModal'
 import { SettleUpModal } from './SettleUpModal'
+import Link from 'next/link'
 
 interface GroupMember {
   id: string
@@ -91,7 +92,11 @@ export function GroupDetailsClient({
                   const iPaid = expense.paidBy.name === activeMembers.find(m => m.userId === currentUserId)?.user.name
                   
                   return (
-                    <div key={expense.id} className="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl border border-gray-800/50 hover:bg-gray-800 transition-colors">
+                    <Link 
+                      key={expense.id} 
+                      href={`/dashboard/groups/${group.id}/expenses/${expense.id}`}
+                      className="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl border border-gray-800/50 hover:bg-gray-800 hover:border-gray-700 transition-colors block"
+                    >
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-lg bg-gray-700 flex items-center justify-center shrink-0">
                           <span className="text-lg">🧾</span>
@@ -117,7 +122,7 @@ export function GroupDetailsClient({
                           <p className="text-xs text-gray-500 mt-0.5">Not involved</p>
                         )}
                       </div>
-                    </div>
+                    </Link>
                   )
                 })}
               </div>
