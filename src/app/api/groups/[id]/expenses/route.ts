@@ -9,7 +9,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     
     const { id } = await params
     const body = await request.json()
-    const { description, amountCents, currency, fxRate, paidById, expenseDate, splits } = body
+    const { description, amountCents, currency, fxRate, paidById, expenseDate, splits, category } = body
 
     // Validate inputs
     if (!description || !amountCents || !paidById || !expenseDate || !splits || splits.length === 0) {
@@ -49,6 +49,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         currency: currency || 'INR',
         inrEquivalentCents,
         fxRate: fxRate || 1.0,
+        category: category || '🧾',
         expenseDate: new Date(expenseDate),
         splits: {
           create: splits.map((s: any) => ({

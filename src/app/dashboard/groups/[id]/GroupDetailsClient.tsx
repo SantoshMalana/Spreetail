@@ -6,6 +6,7 @@ import { AddExpenseModal } from './AddExpenseModal'
 import { SettleUpModal } from './SettleUpModal'
 import { EditGroupModal } from './EditGroupModal'
 import { LeaveGroupButton } from './LeaveGroupButton'
+import { DeleteGroupButton } from './DeleteGroupButton'
 import Link from 'next/link'
 
 interface GroupMember {
@@ -29,6 +30,7 @@ interface Expense {
   currency: string
   expenseDate: string
   paidBy: { name: string }
+  category: string
   splits: ExpenseSplit[]
 }
 
@@ -81,12 +83,21 @@ export function GroupDetailsClient({
           </div>
           <p className="text-gray-400">Manage expenses and members</p>
         </div>
-        <button 
-          onClick={() => setIsExpenseOpen(true)}
-          className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold rounded-xl transition-colors shadow-lg shadow-emerald-500/20"
-        >
-          + Add Expense
-        </button>
+        <div className="flex items-center gap-3">
+          <a
+            href={`/api/groups/${group.id}/export`}
+            download
+            className="hidden md:flex px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white text-sm font-semibold rounded-xl transition-colors border border-gray-700"
+          >
+            📥 Export CSV
+          </a>
+          <button 
+            onClick={() => setIsExpenseOpen(true)}
+            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold rounded-xl transition-colors shadow-lg shadow-emerald-500/20"
+          >
+            + Add Expense
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -117,7 +128,7 @@ export function GroupDetailsClient({
                     >
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-lg bg-gray-700 flex items-center justify-center shrink-0">
-                          <span className="text-lg">🧾</span>
+                          <span className="text-lg">{expense.category || '🧾'}</span>
                         </div>
                         <div>
                           <p className="text-sm font-semibold text-white">{expense.description}</p>

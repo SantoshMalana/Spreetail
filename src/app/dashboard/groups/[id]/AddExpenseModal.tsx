@@ -27,6 +27,7 @@ export function AddExpenseModal({ isOpen, onClose, groupId, members, currentUser
   const [description, setDescription] = useState('')
   const [amount, setAmount] = useState('')
   const [currency, setCurrency] = useState('INR')
+  const [category, setCategory] = useState('🧾')
   const [fxRate, setFxRate] = useState('83.0')
   const [expenseDate, setExpenseDate] = useState(() => new Date().toISOString().split('T')[0])
   const [paidById, setPaidById] = useState(currentUserId)
@@ -153,6 +154,7 @@ export function AddExpenseModal({ isOpen, onClose, groupId, members, currentUser
           fxRate: parsedFxRate,
           expenseDate,
           paidById,
+          category,
           splits: payloadSplits
         }),
       })
@@ -191,15 +193,31 @@ export function AddExpenseModal({ isOpen, onClose, groupId, members, currentUser
             
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-300 mb-1.5">Description</label>
-                <input
-                  type="text"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Dinner at Marina Bites"
-                  required
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
-                />
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">Description & Category</label>
+                <div className="flex gap-2">
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="w-16 px-2 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white text-center focus:outline-none focus:border-emerald-500 appearance-none cursor-pointer"
+                  >
+                    <option value="🧾">🧾</option>
+                    <option value="🍔">🍔</option>
+                    <option value="✈️">✈️</option>
+                    <option value="🏠">🏠</option>
+                    <option value="🛒">🛒</option>
+                    <option value="🚗">🚗</option>
+                    <option value="🎟️">🎟️</option>
+                    <option value="💡">💡</option>
+                  </select>
+                  <input
+                    type="text"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Dinner at Marina Bites"
+                    required
+                    className="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
               </div>
 
               <div>

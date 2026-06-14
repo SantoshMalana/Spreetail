@@ -56,6 +56,7 @@ model Expense {
   currency           String   @default("INR")
   inrEquivalentCents Int      // Converted INR value used for all balance calculations
   fxRate             Float    @default(1.0) // FX rate used for conversion. 1.0 for INR expenses.
+  category           String   @default("🧾")
   expenseDate        DateTime // Normalised date of expense
   importRow          Int?     // CSV row number, for import traceability
   createdAt          DateTime @default(now())
