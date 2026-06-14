@@ -28,6 +28,12 @@ interface Expense {
   splits: ExpenseSplit[]
 }
 
+interface SimplifiedDebt {
+  fromUserId: string
+  toUserId: string
+  amountCents: number
+}
+
 interface Group {
   id: string
   name: string
@@ -35,7 +41,15 @@ interface Group {
   expenses: Expense[]
 }
 
-export function GroupDetailsClient({ group, currentUserId }: { group: Group, currentUserId: string }) {
+export function GroupDetailsClient({ 
+  group, 
+  currentUserId,
+  simplifiedDebts
+}: { 
+  group: Group, 
+  currentUserId: string,
+  simplifiedDebts: SimplifiedDebt[]
+}) {
   const [isInviteOpen, setIsInviteOpen] = useState(false)
   const [isExpenseOpen, setIsExpenseOpen] = useState(false)
 
@@ -109,8 +123,50 @@ export function GroupDetailsClient({ group, currentUserId }: { group: Group, cur
           </div>
         </div>
 
-        {/* Sidebar: Members */}
-        <div className="space-y-4">
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Balances Widget */}
+          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+            <h2 className="text-lg font-semibold text-white mb-4">Group Balances</h2>
+            
+            {simplifiedDebts.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-4">All settled up!</p>
+            ) : (
+              <div className="space-y-4">
+                {simplifiedDebts.map((debt, idx) => {
+                  const fromUser = group.members.find(m => m.userId === debt.fromUserId)?.user.name || 'Someone'
+                  const toUser = group.members.find(m => m.userId === debt.toUserId)?.user.name || 'someone'
+                  const isMeOwe = debt.fromUserId === currentUserId
+                  const isOwedMe = debt.toUserId === currentUserId
+                  
+                  return (
+                    <div key={idx} className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className={`font-medium ${isMeOwe ? 'text-white' : 'text-gray-300'}`}>
+                          {isMeOwe ? 'You' : fromUser}
+                        </span>
+                        <span className="text-gray-500">owes</span>
+                        <span className={`font-medium ${isOwedMe ? 'text-white' : 'text-gray-300'}`}>
+                          {isOwedMe ? 'you' : toUser}
+                        </span>
+                      </div>
+                      <span className={`font-bold ${isMeOwe ? 'text-orange-400' : isOwedMe ? 'text-emerald-400' : 'text-gray-400'}`}>
+                        ₹{(debt.amountCents / 100).toFixed(2)}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+            
+            {simplifiedDebts.length > 0 && (
+              <button className="w-full mt-6 py-2 px-4 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-semibold rounded-xl transition-colors text-sm">
+                Settle up
+              </button>
+            )}
+          </div>
+
+          {/* Members Widget */}
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-white">Members</h2>
