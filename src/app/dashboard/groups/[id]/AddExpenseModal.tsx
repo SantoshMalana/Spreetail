@@ -62,8 +62,6 @@ export function AddExpenseModal({ isOpen, onClose, groupId, members, currentUser
     })
   }, [activeMembersOnDate])
 
-  if (!isOpen) return null
-
   const parsedAmount = parseFloat(amount) || 0
   const parsedFxRate = currency === 'USD' ? parseFloat(fxRate) || 1 : 1
   const inrEquivalent = Math.round(parsedAmount * parsedFxRate * 100) // in cents
@@ -97,8 +95,6 @@ export function AddExpenseModal({ isOpen, onClose, groupId, members, currentUser
         const pct = parseFloat(splitValues[uid]) || 0
         result[uid] = Math.round(inrEquivalent * (pct / 100))
       }
-      // Note: We'd normally need to correct for rounding drift here, 
-      // but we let the backend strictly reject if it doesn't sum to 100% equivalent.
     }
     else if (splitType === 'SHARE') {
       let totalShares = 0
@@ -112,7 +108,6 @@ export function AddExpenseModal({ isOpen, onClose, groupId, members, currentUser
         for (let i = 0; i < sortedUsers.length; i++) {
           const uid = sortedUsers[i]
           if (i === sortedUsers.length - 1) {
-            // Last person gets the remainder
             result[uid] = inrEquivalent - sum
           } else {
             const val = Math.round((parseFloat(splitValues[uid]) || 0) * shareAmount)
@@ -124,6 +119,9 @@ export function AddExpenseModal({ isOpen, onClose, groupId, members, currentUser
     }
     return result
   }, [inrEquivalent, includedUserIds, splitType, splitValues])
+
+  // Early return AFTER all hooks to satisfy Rules of Hooks
+  if (!isOpen) return null
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
