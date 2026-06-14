@@ -17,7 +17,8 @@ export function signToken(payload: JWTPayload): string {
 export function verifyToken(token: string): JWTPayload | null {
   try {
     return jwt.verify(token, JWT_SECRET) as JWTPayload
-  } catch {
+  } catch (error) {
+    console.error('verifyToken failed:', error)
     return null
   }
 }
@@ -25,8 +26,11 @@ export function verifyToken(token: string): JWTPayload | null {
 export async function getSessionUser(): Promise<JWTPayload | null> {
   const cookieStore = await cookies()
   const token = cookieStore.get(COOKIE_NAME)?.value
+  console.log('getSessionUser token:', token ? 'exists' : 'missing')
   if (!token) return null
-  return verifyToken(token)
+  const payload = verifyToken(token)
+  console.log('getSessionUser payload:', payload ? 'valid' : 'invalid')
+  return payload
 }
 
 export { COOKIE_NAME }

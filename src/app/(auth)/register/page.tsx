@@ -29,7 +29,9 @@ export default function RegisterPage() {
         setError(data.error || 'Registration failed')
         return
       }
-      router.push('/dashboard')
+      
+      // Force full reload to update auth context
+      window.location.href = '/dashboard'
     } catch {
       setError('Something went wrong. Please try again.')
     } finally {

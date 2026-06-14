@@ -38,7 +38,7 @@ export async function POST(request: Request) {
           data: {
             name: titleCaseName,
             email: `${name.replace(/[^a-zA-Z]/g, '')}@placeholder.com`,
-            password: 'placeholder_hash' // Safe because they can't login anyway
+            passwordHash: 'placeholder_hash' // Safe because they can't login anyway
           }
         })
       }
