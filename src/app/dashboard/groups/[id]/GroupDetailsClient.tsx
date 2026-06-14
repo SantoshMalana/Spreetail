@@ -253,7 +253,7 @@ export function GroupDetailsClient({
             <div className="mt-8 border-t border-gray-800 pt-6">
               <h3 className="text-lg font-bold text-red-400 mb-4">Danger Zone</h3>
               <LeaveGroupButton groupId={group.id} currentUserId={currentUserId} />
-              {expenses.length === 0 && <DeleteGroupButton groupId={group.id} />}
+              {group.expenses.length === 0 && <DeleteGroupButton groupId={group.id} />}
             </div>
           </div>
         </div>
