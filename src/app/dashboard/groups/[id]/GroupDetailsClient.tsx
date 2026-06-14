@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { InviteMemberModal } from './InviteMemberModal'
 import { AddExpenseModal } from './AddExpenseModal'
+import { SettleUpModal } from './SettleUpModal'
 
 interface GroupMember {
   id: string
@@ -52,6 +53,7 @@ export function GroupDetailsClient({
 }) {
   const [isInviteOpen, setIsInviteOpen] = useState(false)
   const [isExpenseOpen, setIsExpenseOpen] = useState(false)
+  const [isSettleOpen, setIsSettleOpen] = useState(false)
 
   const activeMembers = group.members.filter(m => !m.leftAt)
   const pastMembers = group.members.filter(m => m.leftAt)
@@ -160,7 +162,10 @@ export function GroupDetailsClient({
             )}
             
             {simplifiedDebts.length > 0 && (
-              <button className="w-full mt-6 py-2 px-4 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-semibold rounded-xl transition-colors text-sm">
+              <button 
+                onClick={() => setIsSettleOpen(true)}
+                className="w-full mt-6 py-2 px-4 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-semibold rounded-xl transition-colors text-sm"
+              >
                 Settle up
               </button>
             )}
@@ -221,6 +226,14 @@ export function GroupDetailsClient({
         groupId={group.id}
         members={group.members}
         currentUserId={currentUserId}
+      />
+      <SettleUpModal
+        isOpen={isSettleOpen}
+        onClose={() => setIsSettleOpen(false)}
+        groupId={group.id}
+        currentUserId={currentUserId}
+        debts={simplifiedDebts}
+        members={group.members}
       />
     </div>
   )
