@@ -15,6 +15,13 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
       members: {
         include: { user: { select: { id: true, name: true, email: true } } },
         orderBy: { joinedAt: 'asc' }
+      },
+      expenses: {
+        orderBy: { expenseDate: 'desc' },
+        include: {
+          paidBy: { select: { name: true } },
+          splits: true
+        }
       }
     }
   })
@@ -36,8 +43,13 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
       ...m,
       joinedAt: m.joinedAt.toISOString(),
       leftAt: m.leftAt?.toISOString() || null
+    })),
+    expenses: group.expenses.map(e => ({
+      ...e,
+      expenseDate: e.expenseDate.toISOString(),
+      createdAt: e.createdAt.toISOString()
     }))
   }
 
-  return <GroupDetailsClient group={serializedGroup} />
+  return <GroupDetailsClient group={serializedGroup} currentUserId={user.userId} />
 }

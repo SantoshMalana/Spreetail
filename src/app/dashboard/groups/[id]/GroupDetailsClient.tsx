@@ -2,22 +2,42 @@
 
 import { useState } from 'react'
 import { InviteMemberModal } from './InviteMemberModal'
+import { AddExpenseModal } from './AddExpenseModal'
 
 interface GroupMember {
   id: string
+  userId: string
   joinedAt: string
   leftAt: string | null
   user: { id: string; name: string; email: string }
+}
+
+interface ExpenseSplit {
+  id: string
+  userId: string
+  amountOwedCents: number
+}
+
+interface Expense {
+  id: string
+  description: string
+  amountCents: number
+  currency: string
+  expenseDate: string
+  paidBy: { name: string }
+  splits: ExpenseSplit[]
 }
 
 interface Group {
   id: string
   name: string
   members: GroupMember[]
+  expenses: Expense[]
 }
 
-export function GroupDetailsClient({ group }: { group: Group }) {
+export function GroupDetailsClient({ group, currentUserId }: { group: Group, currentUserId: string }) {
   const [isInviteOpen, setIsInviteOpen] = useState(false)
+  const [isExpenseOpen, setIsExpenseOpen] = useState(false)
 
   const activeMembers = group.members.filter(m => !m.leftAt)
   const pastMembers = group.members.filter(m => m.leftAt)
@@ -30,19 +50,62 @@ export function GroupDetailsClient({ group }: { group: Group }) {
           <h1 className="text-3xl font-bold text-white mb-1">{group.name}</h1>
           <p className="text-gray-400">Manage expenses and members</p>
         </div>
-        <button className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold rounded-xl transition-colors shadow-lg shadow-emerald-500/20">
+        <button 
+          onClick={() => setIsExpenseOpen(true)}
+          className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold rounded-xl transition-colors shadow-lg shadow-emerald-500/20"
+        >
           + Add Expense
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content: Expenses (Placeholder for now) */}
+        {/* Main Content: Expenses */}
         <div className="lg:col-span-2 space-y-4">
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Recent Expenses</h2>
-            <div className="text-center py-8 text-gray-500">
-              <p>No expenses logged yet.</p>
-            </div>
+            <h2 className="text-lg font-semibold text-white mb-6">Recent Expenses</h2>
+            
+            {group.expenses.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <p>No expenses logged yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {group.expenses.map(expense => {
+                  const mySplit = expense.splits.find(s => s.userId === currentUserId)
+                  const iPaid = expense.paidBy.name === activeMembers.find(m => m.userId === currentUserId)?.user.name
+                  
+                  return (
+                    <div key={expense.id} className="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl border border-gray-800/50 hover:bg-gray-800 transition-colors">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-lg bg-gray-700 flex items-center justify-center shrink-0">
+                          <span className="text-lg">🧾</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-white">{expense.description}</p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(expense.expenseDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            {' • '}Paid by {expense.paidBy.name}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-white">
+                          {expense.currency === 'USD' ? '$' : '₹'}
+                          {(expense.amountCents / 100).toFixed(2)}
+                        </p>
+                        {mySplit ? (
+                          <p className={`text-xs mt-0.5 ${iPaid ? 'text-emerald-400' : 'text-orange-400'}`}>
+                            {iPaid ? `You lent ₹${(expense.splits.filter(s => s.userId !== currentUserId).reduce((a,b)=>a+b.amountOwedCents,0) / 100).toFixed(2)}` : `You borrowed ₹${(mySplit.amountOwedCents / 100).toFixed(2)}`}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-gray-500 mt-0.5">Not involved</p>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </div>
 
@@ -96,6 +159,13 @@ export function GroupDetailsClient({ group }: { group: Group }) {
       </div>
 
       <InviteMemberModal isOpen={isInviteOpen} onClose={() => setIsInviteOpen(false)} groupId={group.id} />
+      <AddExpenseModal 
+        isOpen={isExpenseOpen} 
+        onClose={() => setIsExpenseOpen(false)} 
+        groupId={group.id}
+        members={group.members}
+        currentUserId={currentUserId}
+      />
     </div>
   )
 }
