@@ -24,7 +24,7 @@ export function LeaveGroupButton({ groupId, currentUserId }: { groupId: string, 
       router.push('/dashboard')
       router.refresh()
     } catch (err: unknown) {
-      alert(err.message)
+      alert(err instanceof Error ? err.message : 'An error occurred')
       setLoading(false)
     }
   }

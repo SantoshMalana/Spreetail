@@ -3,13 +3,20 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
+interface ImportResult {
+  success: boolean
+  importedExpensesCount: number
+  importedSettlementsCount: number
+  errors: string[]
+}
+
 export default function ImportPage() {
   const router = useRouter()
   const [groups, setGroups] = useState<{ id: string; name: string }[]>([])
   const [selectedGroupId, setSelectedGroupId] = useState('')
   const [fileContent, setFileContent] = useState<string>('')
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<Record<string, unknown> | null>(null)
+  const [result, setResult] = useState<ImportResult | null>(null)
   const [error, setError] = useState('')
 
   useEffect(() => {
